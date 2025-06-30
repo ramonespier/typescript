@@ -179,3 +179,86 @@ Object.assign(console, {
 console.sayHello(); // Output: Hello
 
 // ⚠️ É preciso ter cuidado ao extender tipagens e objetos já existentes!
+```
+
+### `types.ts`
+A palavra-chave `type` cria um **alias** (um apelido) para um tipo. É extremamente flexível e pode ser usada para criar tipos complexos de forma declarativa. Enquanto `interface` é excelente para descrever a "forma" de objetos e classes, `type` brilha na composição de tipos usando operadores.
+
+Os principais conceitos mostrados são:
+- **Intersection Types (`&`)**: Combina múltiplos tipos em um só. O tipo resultante terá **todas** as propriedades dos tipos combinados.
+- **Union Types (`|`)**: Cria um tipo que pode ser um de vários outros tipos. Uma variável desse tipo pode conter o valor de **qualquer um** dos tipos na união, mas apenas um de cada vez.
+
+```ts
+// Types para descrever a estrutura de objetos, similar a interfaces
+type UserWallet = {
+    coins?: number;
+    credits?: number;
+}
+
+type User = { // PaskalCase é a convenção
+    name: string;
+    createdAt: Date;
+    wallet?: UserWallet;
+}
+
+// INTERSECTION TYPE (&): Admin é um User E também tem os métodos ban/kick
+type Admin = User & {
+    ban(user: User): void;
+    kick(user: User): void;
+}
+
+
+// UNION TYPE (|): A variável 'input' pode ser uma string OU um objeto User
+type Input = string | User;
+
+function prompt(input: Input) { 
+    if (typeof input === 'string') {
+        console.log("Recebido texto:", input);
+    } else {
+        console.log("Recebido usuário:", input.name);
+    }
+}
+
+prompt('Olá, Ramon');
+prompt({ name: 'Ramon User', createdAt: new Date() });
+
+
+// Usando interfaces para definir as "formas" base dos animais
+interface Dog {
+    name: string;
+    breed: string;
+    bark(): string;
+}
+
+interface Cat {
+    name: string;
+    color: string;
+    miau(): string;
+}
+interface Bird {
+    name: string;
+    wingspan: number;
+    chirp(): string;
+}
+interface Cow {
+    name: string;
+    weight: number;
+    moo(): string;
+}
+
+// UNION TYPE complexo: Um 'Animal' pode ser um Dog, OU um Cat, OU um Bird, OU uma Cow.
+type Animal = Dog | Cat | Bird | Cow;
+
+// A função aceita um objeto que corresponda a QUALQUER UMA das interfaces na união 'Animal'
+function createAnimal(animal: Animal): void {
+    console.log('Animal criado:', animal.name);
+}
+
+// Este objeto corresponde perfeitamente à interface 'Cat', então é um 'Animal' válido.
+createAnimal({
+    name: 'Salém',
+    color: 'Cinza',
+    miau() {
+        return 'miau';
+    },
+});
