@@ -188,7 +188,7 @@ Os principais conceitos mostrados são:
 - **Intersection Types (`&`)**: Combina múltiplos tipos em um só. O tipo resultante terá **todas** as propriedades dos tipos combinados.
 - **Union Types (`|`)**: Cria um tipo que pode ser um de vários outros tipos. Uma variável desse tipo pode conter o valor de **qualquer um** dos tipos na união, mas apenas um de cada vez.
 
-```ts
+~~~ts
 // Types para descrever a estrutura de objetos, similar a interfaces
 type UserWallet = {
     coins?: number;
@@ -262,3 +262,37 @@ createAnimal({
         return 'miau';
     },
 });
+
+~~~
+
+### `tuplas.ts`
+Tuplas são um tipo especial de array com um número fixo de elementos, onde o tipo de cada elemento em sua respectiva posição é conhecido. Diferente de um array comum (como `string[]`), que pode ter qualquer tamanho, uma tupla tem uma estrutura rígida, o que garante maior segurança e previsibilidade ao manipular conjuntos de dados com formato definido.
+
+- **Estrutura Fixa:** Define o número exato de elementos e o tipo específico para cada posição.
+- **Labels (Rótulos):** É possível adicionar rótulos (como `day: number`) para tornar o código mais legível e explícito, sem alterar o tipo ou a lógica.
+- **Reutilização com `type`:** Criar um alias com `type` permite reutilizar a estrutura da tupla em várias partes do código.
+- **Desestruturação:** A forma mais comum e limpa de acessar os valores de uma tupla é através da desestruturação.
+
+```ts
+// Um array comum: pode ter 0 ou N elementos do tipo string.
+type NameList = string[];
+
+// Uma Tupla: deve ter EXATAMENTE 3 elementos, na ordem: number, number, number.
+type CalendarDate = [day: number, month: number, year: number];
+
+const list: NameList = [];
+list.push('Ramon'); // Válido
+
+const date: CalendarDate = [30, 6, 2025]; // Válido
+// const wrongDate: CalendarDate = [30, 6]; // Erro: Faltam elementos
+// const anotherWrongDate: CalendarDate = ['30', '06', '2025']; // Erro: Tipos incorretos
+
+// A forma ideal de usar uma tupla é desestruturando seus valores.
+function createDate(date: CalendarDate) {
+    const [day, month, year] = date;
+    console.log(`A data é ${day}/${month}/${year}`);
+}
+
+createDate(date); // Output: A data é 30/6/2025
+createDate([1, 1, 2030]); // Também é válido
+```
