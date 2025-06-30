@@ -296,3 +296,50 @@ function createDate(date: CalendarDate) {
 createDate(date); // Output: A data é 30/6/2025
 createDate([1, 1, 2030]); // Também é válido
 ```
+
+### `enums.ts`
+Enums (ou Enumerações) são uma maneira de criar um conjunto de constantes nomeadas. Elas são ideais para substituir "números mágicos" (valores hardcoded, como 1, 2, 3...) ou strings repetitivas, tornando o código muito mais legível, seguro e fácil de manter.
+
+- **Legibilidade:** Em vez de usar um número como `1` em uma condição, você usa `Direction.North`, o que torna a intenção do código explícita e auto-documentada.
+- **Segurança de Tipo:** TypeScript garante que apenas os membros do `enum` possam ser usados onde o tipo do `enum` é esperado. Isso previne que valores arbitrários (e potencialmente inválidos) sejam atribuídos em tempo de desenvolvimento.
+- **Centralização:** Todas as constantes relacionadas ficam agrupadas. Se um valor precisar mudar, a alteração é feita em um único lugar.
+
+Existem dois tipos principais de enums:
+1.  **Numéricos:** Por padrão, associam as chaves a números que se auto-incrementam (começando em 0).
+2.  **Baseados em String:** Associam as chaves a valores de string definidos explicitamente. São úteis quando o valor precisa ser uma string legível (por exemplo, para logs ou armazenamento).
+
+```ts
+// Enums criam um conjunto de constantes para tipagem segura.
+
+// 1. Enum Numérico
+enum Direction {
+    North = 1, // Definimos o início como 1
+    South,     // Será 2 (auto-incremento)
+    East,      // Será 3
+    West       // Será 4
+}
+
+const pos = {
+    x: 100,
+    y: 230,
+    direction: Direction.North // Muito mais legível que 'direction: 1'
+};
+
+// Enums tornam o código mais legível e evitam "números mágicos" (hardcoded).
+
+// 2. Enum de String
+enum ClothingSize {
+    ExtraSmall = "PP",
+    Small = "P",
+    Medium = "M",
+    Large = "G",
+    ExtraLarge = "GG"
+}
+
+const cloth = {
+    color: 'red',
+    size: ClothingSize.ExtraLarge // Previne erros de digitação como "G G" ou "gg"
+};
+
+console.log(`O tamanho da peça é ${cloth.size}`); // Output: O tamanho da peça é GG
+```
