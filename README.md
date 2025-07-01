@@ -413,3 +413,177 @@ myFetch("http://localhost:3001/auth", {
     method: "POST", // opção nativa do fetch
 });
 ```
+
+## Union Types (`|`)
+
+**Union Types** (`|`) são uma maneira de declarar que uma variável, parâmetro ou retorno de função pode ter **um de vários tipos possíveis**. Diferente da interseção (`&`) que exige *todos* os tipos, a união permite *qualquer um* dos tipos especificados. Isso torna o código extremamente flexível e descritivo.
+
+### 📂 `union.ts`
+
+Este arquivo mostra a união mais básica, combinando tipos primitivos.
+
+- **Conceito:** A `type Primitive` pode armazenar um valor que seja `string`, `number` ou `boolean`.
+- **Uso:** Usando `typeof`, podemos verificar qual tipo a variável possui em tempo de execução e o TypeScript irá "entender" o contexto, liberando as operações específicas daquele tipo (um processo chamado de *narrowing* ou "estreitamento").
+
+```ts
+type Primitive = string | number | boolean
+
+export function main(value: Primitive) {
+    if(typeof value === 'string') {
+        // Agora, TS sabe que 'value' é uma string aqui dentro.
+        console.log(value.toUpperCase());
+        return;
+    }
+    if(typeof value === 'number') {
+        // E aqui, sabe que é um número.
+        console.log(value.toFixed(2));
+        return;
+    }
+    // E aqui, por eliminação, sabe que só pode ser boolean.
+    console.log("É um booleano:", value);
+}
+```
+
+### 📂 `literalUnion.ts`
+
+A união não se limita a tipos primitivos, ela também pode ser feita com **valores literais**, criando um conjunto restrito de constantes permitidas.
+
+- **Conceito:** A `type Action` só pode receber as strings `"create"`, `"update"`, ou `"delete"`. O mesmo acontece com `ImageSize`, que só aceita os números específicos na lista.
+- **Vantagem:** Previne erros de digitação e o uso de valores inválidos (as "magic strings/numbers"), oferecendo autocompletar no editor.
+
+```ts
+// União de strings literais
+type Action = "create" | "update" | "delete"
+
+function manage(action: Action) { /*...*/ }
+manage("create") // Válido
+// manage("read")  // Erro: "read" não é um valor permitido
+
+// União de números literais
+type ImageSize = 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 | 2048
+
+interface Image {
+    name: string;
+    size: ImageSize
+}
+
+const image: Image = {
+    name: 'Ramon',
+    size: 1024 // Válido
+}
+```
+
+### 📂 `enumUnion.ts` (Discriminated Unions)
+
+Este arquivo demonstra um dos padrões mais poderosos em TypeScript: **Uniões Discriminadas** (ou *Tagged Unions*).
+
+- **Conceito:** Usamos uma propriedade em comum (aqui, `type`) como um "discriminante" ou "tag". Cada interface na união tem a mesma propriedade `type`, mas com um valor literal diferente (neste caso, um membro do `enum TrafficLightType`).
+- **Vantagem:** Quando verificamos o valor da propriedade `type`, o TypeScript consegue **discriminar** qual das interfaces está em uso e libera o acesso às suas propriedades e métodos específicos com total segurança de tipo. É um padrão excelente para modelar estados.
+
+```ts
+// Usar um Enum para as "tags" torna o código mais legível e seguro.
+enum TrafficLightType {
+    Green,
+    Yellow,
+    Red,
+}
+
+// Cada interface tem a propriedade 'type' como discriminante
+interface GreenColor {
+    type: TrafficLightType.Green
+    drive(): void;
+}
+interface YellowColor {
+    type: TrafficLightType.Yellow
+    wait(): void;
+}
+interface RedColor {
+    type: TrafficLightType.Red
+    stop(): void;
+}
+
+type TrafficLight = GreenColor | YellowColor | RedColor;
+
+function handleTrafficLight(light: TrafficLight) {
+    // Ao verificar a propriedade 'type', TS sabe exatamente qual é a forma do objeto
+    switch (light.type) {
+        case TrafficLightType.Green:
+            light.drive(); // 'drive' está disponível
+            break;
+        case TrafficLightType.Yellow:
+            light.wait(); // 'wait' está disponível
+            break;
+        case TrafficLightType.Red:
+            light.stop(); // 'stop' está disponível
+            break;
+    }
+}
+```
+
+### 📂 `combinedUnion.ts`
+
+Unions podem combinar tipos literais diferentes, como strings e números, em uma única definição.
+
+- **Conceito:** O tipo `Status` pode representar o status de uma resposta tanto pela string descritiva (`"Ok"`) quanto pelo seu código numérico (`200`).
+
+```ts
+type Status = "notFound" | 404 | "Ok" | 200 | "forbidden" | 403;
+
+function sendStatus(status: Status) {
+    console.log("Enviando status:", status);
+}
+
+sendStatus("Ok");      // Válido
+sendStatus(404);       // Válido
+// sendStatus("error"); // Erro: valor não permitido
+```
+
+### 📂 `jsonUnion.ts`
+
+Este exemplo mostra uma aplicação avançada de uniões: um **tipo recursivo** para validar qualquer estrutura JSON.
+
+- **Conceito:** O tipo `JSONValue` define que um valor JSON pode ser um primitivo (`string`, `number`, `boolean`), ou um array de `JSONValue`s, ou um objeto onde cada chave aponta para um `JSONValue`.
+- **Uso:** É extremamente útil ao fazer o `parse` de um JSON de uma fonte externa, pois permite navegar pela estrutura de forma segura.
+
+```ts
+import { readFile } from "fs/promises"
+
+// O tipo 'JSONValue' se referencia a si mesmo, permitindo estruturas aninhadas.
+type JSONValue = string | number | boolean | JSONValue[] | {
+    [key: string]: JSONValue
+}
+
+async function parseJSON(filePath: string): Promise<JSONValue> {
+    const jsonstring = await readFile(filePath, "utf-8");
+    const json: JSONValue = JSON.parse(jsonstring);
+    return json;
+}
+```
+
+### 📂 `diffUnionTypes.ts`
+
+Por fim, a união pode ser usada para criar sobrecargas de função de uma maneira mais flexível.
+
+- **Conceito:** O tipo `FindItemPredicate` define que o "predicado" para encontrar um item pode ser duas coisas completamente diferentes: um `number` (para atuar como um índice de array) ou uma `função` (para uma busca mais complexa).
+- **Vantagem:** Permite que a função `findItem` tenha dois comportamentos distintos, ambos com segurança de tipo, dependendo do tipo de argumento que ela recebe.
+
+```ts
+type FindItemPredicate = number | ( (value: string, index: number) => boolean );
+
+function findItem(array: string[], predicate: FindItemPredicate ) {
+    // Se o predicado for um número, usamos como índice.
+    if (typeof predicate === "number") {
+        return array[predicate];
+    }
+    // Caso contrário, TS sabe que é uma função e podemos usá-la no 'find'.
+    return array.find(predicate)
+}
+
+// Uso com número
+console.log( findItem(["Ramon", "Coelho", "Melo"], 1) ); // Output: Coelho
+
+// Uso com função
+console.log( findItem(["Ramon", "Coelho", "Melo"], (value) => value.startsWith("M")) ); // Output: Melo
+```
+
+**Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
