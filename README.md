@@ -343,3 +343,73 @@ const cloth = {
 
 console.log(`O tamanho da peça é ${cloth.size}`); // Output: O tamanho da peça é GG
 ```
+
+## Intersection Types (`&`)
+
+A **interseção de tipos** (`&`) é um recurso poderoso do TypeScript que permite combinar múltiplos tipos em um só. O tipo resultante terá **todas as propriedades** dos tipos que foram unidos, criando um "contrato" mais complexo e completo.
+
+### 📂 `intersections.ts`
+
+Este arquivo mostra um exemplo literal e simples de como criar uma interseção.
+
+- **Conceito:** Duas interfaces (`Robot` e `Human`) são combinadas para formar um novo tipo (`Cyborg`).
+- **Resultado:** Qualquer variável do tipo `Cyborg` deve obrigatoriamente ter todas as propriedades definidas tanto em `Robot` quanto em `Human`.
+
+```ts
+// exemplo literaL de interseção
+
+interface Robot {
+    material: string
+    fuel: string
+}
+
+interface Human {
+    name: string
+    age: number
+}
+
+type Cyborg = Robot & Human
+
+const cyborg: Cyborg = {
+    name: 'Ramon',
+    material: 'Lata',
+    age: 20,
+    fuel: "refrigerante"
+}
+```
+
+### 📂 `interFetch.ts`
+
+Este arquivo demonstra um caso de uso prático: estender tipos nativos do TypeScript para criar funções mais flexíveis e seguras.
+
+- **Conceito:** Criamos uma função "wrapper" chamada `myFetch` que adiciona funcionalidades à API `fetch` nativa.
+- **Implementação:** Combinamos nossa própria interface de opções (`MyFetchOptions`) com a interface nativa do TypeScript, `RequestInit`.
+- **Vantagem:** O tipo resultante `RequestOptions` aceita tanto as opções-padrão da `fetch` (`method`, `headers`, `body`, etc.) quanto as que criamos (`printInput`, `printTime`), tudo com o suporte completo de tipagem e autocompletar do editor.
+
+```ts
+interface MyFetchOptions {
+    printInput?: boolean
+    printTime?: boolean
+}
+
+// 'RequestOptions' agora possui TODAS as opções de 'MyFetchOptions' E 'RequestInit'
+type RequestOptions = MyFetchOptions & RequestInit
+
+export function myFetch(input: string, options?: RequestOptions) {
+    if(options?.printInput) {
+        console.log('Input', input)
+    }
+    if(options?.printTime) {
+        console.log('Horário', new Date().toLocaleDateString())
+    }
+    // Todas as opções, incluindo as nativas, são repassadas para a fetch original
+    return fetch(input, options)
+}
+
+// Exemplo de uso com opções customizadas e nativas
+myFetch("http://localhost:3001/auth", {
+    printTime: true,
+    printInput: true,
+    method: "POST", // opção nativa do fetch
+});
+```
