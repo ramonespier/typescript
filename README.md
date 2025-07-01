@@ -586,4 +586,119 @@ console.log( findItem(["Ramon", "Coelho", "Melo"], 1) ); // Output: Coelho
 console.log( findItem(["Ramon", "Coelho", "Melo"], (value) => value.startsWith("M")) ); // Output: Melo
 ```
 
+## Funções em TypeScript
+
+Tipar funções é uma das atividades centrais ao usar TypeScript. Garante que as funções sejam chamadas com os argumentos corretos e que seus retornos sejam tratados como esperado. Isso elimina uma vasta classe de bugs comuns em JavaScript. O arquivo `functions.ts` explora desde o básico até padrões mais avançados e recomendados.
+
+### 📂 `functions.ts`
+
+Este arquivo cobre como tipar parâmetros, retornos, criar tipos de função e o padrão recomendado para passar múltiplos argumentos opcionais.
+
+#### 1. Tipagem Básica: Parâmetros e Retornos
+
+A forma mais fundamental de tipagem é anotar os parâmetros de entrada e o valor de saída da função.
+
+- **Parâmetros:** Cada parâmetro recebe um tipo. Pode-se usar `?` para torná-lo opcional.
+- **Retorno:** O tipo do valor que a função retorna é declarado após a lista de parâmetros. Se a função não retorna nada, usa-se `void`.
+
+```ts
+type Args = string | number | boolean;
+
+// 'dirname' é uma string obrigatória.
+// 'args' é um array opcional (?) de 'Args'.
+// A função DEVE retornar um 'boolean'.
+function bootstrap(dirname: string, args?: Args[]): boolean {
+    // ... lógica da função ...
+    return true;
+}
+```
+
+#### 2. Criando um Tipo de Função (`Function Type`)
+
+Podemos criar um `type` para descrever a "assinatura" de uma função. Isso é útil para garantir que diferentes funções mantenham o mesmo "contrato" ou para tipar callbacks.
+
+```ts
+// 'MainFunction' é um tipo que descreve uma função
+// que recebe um array de strings e não retorna nada (void).
+type MainFunction = (args: string[]) => void;
+
+// 'main' é uma constante que recebe uma função.
+// Ao tipá-la com 'MainFunction', garantimos que sua implementação
+// siga a assinatura definida.
+const main: MainFunction = (args) => {
+    console.log("Argumentos:", args);
+};
+```
+
+#### 3. Métodos Dentro de Interfaces
+
+Interfaces são perfeitas para definir a "forma" de um objeto, incluindo os métodos que ele deve conter.
+
+```ts
+interface Functions {
+    run(context: any): void;
+    execute(): boolean;
+    handle(req: Request, res: Response): void;
+}
+
+// O objeto 'funcs' DEVE implementar todos os métodos
+// definidos na interface 'Functions', com as assinaturas corretas.
+// O autocomplete do editor aqui é extremamente útil.
+const funcs: Functions = {
+    execute() {
+        return true;
+    },
+    handle(req, res) {
+        // ...
+    },
+    run(context) {
+        // ...
+    },
+};
+```
+
+#### 4. Padrão "Options Object" (A Melhor Forma para Parâmetros Opcionais)
+
+Passar uma longa lista de parâmetros opcionais pode tornar o código confuso e difícil de usar.
+
+**A abordagem problemática:**
+
+```ts
+// PROBLEMA: Para passar 'author', eu sou obrigado a passar 'color' e 'time' também,
+// mesmo que eu queira usar seus valores padrão. (ex: oldCustomLog("Hello", "green", undefined, "Ramon"))
+function oldCustomLog(text: string, color: string = "green", time?: Date, author?: string) {
+    // ...
+}
+```
+
+**A solução recomendada: o padrão "Options Object"**
+
+Criei uma `interface` para agrupar todos os parâmetros opcionais em um único objeto. Isso torna a chamada da função muito mais limpa, legível e flexível.
+
+- **Legibilidade:** Os parâmetros são nomeados, tornando claro o que cada valor significa.
+- **Flexibilidade:** A ordem dos parâmetros no objeto não importa.
+- **Manutenção:** Adicionar novos parâmetros opcionais no futuro é trivial: basta adicionar uma nova propriedade na interface.
+
+```ts
+interface CustomLogOptions {
+    color?: string;
+    time?: Date;
+    author?: string;
+}
+
+function CustomLog(text: string, options: CustomLogOptions = {}) {
+    // Usamos desestruturação para extrair as propriedades
+    // e definir valores padrão de forma limpa.
+    const { color = "green", author, time } = options;
+
+    console.log(color, text);
+    if (time) console.log("At:", time.toString());
+    if (author) console.log("By:", author.toString());
+}
+
+// A chamada fica muito mais clara e podemos passar apenas as opções que nos interessam.
+CustomLog("Texto com opções", { time: new Date(), author: "Ramon" });
+CustomLog("Texto com outra cor", { color: "blue" });
+```
+
 **Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
