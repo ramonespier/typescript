@@ -701,4 +701,187 @@ CustomLog("Texto com opções", { time: new Date(), author: "Ramon" });
 CustomLog("Texto com outra cor", { color: "blue" });
 ```
 
+## Classes em TypeScript
+
+TypeScript traz os conceitos de Programação Orientada a Objetos (OOP) para o JavaScript de uma forma robusta e segura. Classes funcionam como "plantas" ou "moldes" para a criação de objetos, encapsulando dados (propriedades) e comportamentos (métodos) relacionados.
+
+### 📂 `classes.ts`: Classes, Construtores e Herança
+
+Este arquivo demonstra os fundamentos da criação de classes.
+
+- **Estrutura:** Uma classe agrupa propriedades (variáveis) e métodos (funções).
+- **Construtor (`constructor`):** Um método especial executado no momento em que um objeto é criado (`new Player(...)`). É usado para inicializar as propriedades do objeto.
+- **Modificadores (`private`):** Controlam o acesso a propriedades/métodos. Uma propriedade `private` só pode ser acessada de dentro da própria classe. (Ver mais em `modificadorDeAcesso.ts`).
+- **Métodos `static`:** Pertencem à classe em si, e não a uma instância individual. `Player.players` é um array compartilhado por todos os objetos `Player`.
+- **Herança (`extends`):** Uma classe pode herdar propriedades e métodos de outra classe (a "classe pai"). No exemplo, `Cat` herda de `Animal`.
+- **`super()`:** Dentro de uma classe filha, `super()` é usado para chamar o construtor da classe pai, garantindo que a inicialização da classe pai seja executada.
+- **Sobrescrita de Método (Method Overriding):** Uma classe filha pode fornecer sua própria implementação para um método que ela herdou, como `Cat` fazendo com `makeSound`.
+
+```ts
+export class Player {
+    // static: esta propriedade pertence à CLASSE Player, não a uma instância.
+    private static players: Player[] = []
+    
+    // Propriedades da instância
+    private name: string
+    private health: number
+
+    constructor(name: string) {
+        this.name = name;
+        this.health = 20;
+        Player.players.push(this); // Adiciona a nova instância ao array estático
+    }
+
+    public damage(amount: number, damager?: Player) {
+        // ...lógica
+    }
+
+    private die() {
+        // ...lógica
+    }
+}
+
+// Classe base (pai)
+class Animal {
+    name: string;
+    age: number
+
+    constructor(name: string, age: number) {
+        this.name = name;
+        this.age = age;
+    }
+    makeSound(): void {
+        console.log(`${this.name} está fazendo um som`);
+    }
+}
+
+// Classe filha que herda de Animal
+class Cat extends Animal {
+    color: string;
+    constructor(name: string, age: number, color: string) {
+        super(name, age); // Chama o construtor da classe Animal
+        this.color = color;
+    }
+
+    // Sobrescreve o método da classe pai
+    makeSound(): void {
+        console.log(`${this.name} está miando`);
+    }
+}
+```
+
+### 📂 `interfacesClasses.ts`: Implementando Interfaces
+
+Enquanto a herança (`extends`) é sobre herdar implementação, usar `implements` é sobre seguir um **contrato**. Uma classe que implementa uma interface é forçada a fornecer uma implementação para todos os métodos e propriedades definidos nessa interface.
+
+- **Contrato:** A interface `Drivable` define que qualquer coisa "dirigível" deve obrigatoriamente ter os métodos `startEngine` e `drive`.
+- **Implementação:** A classe `Car`, ao declarar `implements Drivable`, assume a responsabilidade de implementar esses dois métodos.
+
+```ts
+interface Drivable {
+    startEngine(): void;
+    drive(): void;
+}
+
+// A classe Car promete cumprir o contrato definido por Drivable.
+class Car implements Drivable {
+    startEngine(): void {
+        console.log("Engine started");
+    }
+    drive(): void {
+        console.log("Carro está sendo dirigido");
+    }
+}
+```
+
+### 📂 `abstractClass.ts`: Classes Abstratas
+
+Classes abstratas são um meio-termo entre uma interface e uma classe. Elas servem como uma "classe base" que **não pode ser instanciada diretamente**. Elas são projetadas para serem herdadas.
+
+- **Classe Abstrata:** Marcada com a palavra-chave `abstract`, `Shape` define um modelo para outras classes.
+- **Método Abstrato:** `abstract area()`: um método que é declarado, mas não tem corpo (implementação). Qualquer classe que herdar de `Shape` será **obrigada** a fornecer uma implementação concreta para `area()`.
+- **Método Concreto:** Uma classe abstrata também pode ter métodos totalmente implementados (como `describe`), que são herdados normalmente.
+
+```ts
+abstract class Shape {
+    // Um método abstrato: deve ser implementado pelas classes filhas.
+    abstract area(): number;
+
+    // Um método concreto: é herdado como está.
+    describe(): void {
+        console.log("Isso é uma forma genérica.");
+    }
+}
+
+class Circle extends Shape {
+    radius: number;
+    constructor(radius: number) {
+        super();
+        this.radius = radius;
+    }
+
+    // Implementação obrigatória do método abstrato 'area'.
+    area(): number {
+        return Math.PI * this.radius ** 2;
+    }
+    
+    // Sobrescrita opcional do método concreto.
+    describe(): void {
+        console.log("Isso é um círculo.");
+    }
+}
+
+// const shape = new Shape(); // ERRO: Não se pode instanciar uma classe abstrata.
+const circle = new Circle(7);
+circle.area();
+```
+
+### 📂 `modificadorDeAcesso.ts`: Modificadores de Acesso
+
+Modificadores de acesso controlam a visibilidade e acessibilidade de membros de uma classe (propriedades e métodos).
+
+- **`public` (padrão):** O membro pode ser acessado de qualquer lugar: de dentro da classe, de classes filhas e de fora da classe.
+- **`private`:** O membro só pode ser acessado **de dentro da própria classe** que o definiu. Nem classes filhas podem acessá-lo. No exemplo, `name` é privado para `Employee`.
+- **`protected`:** O membro pode ser acessado **de dentro da própria classe** e também **de qualquer classe que a herde (filhas)**. No exemplo, `age` e `getAge` são `protected` em `Person` e podem ser usados por `Employee` e `CEO`, mas não podem ser acessados de fora (`const emp = new Employee(...)`, `emp.getAge()` daria erro).
+
+```ts
+class Person {
+    // protected: acessível a esta classe e classes filhas.
+    protected age: number;
+    constructor(age: number) {
+        this.age = age;
+    }
+    protected getAge(): number {
+        return this.age;
+    }
+}
+
+class Employee extends Person {
+    // private: acessível apenas dentro de Employee.
+    private name: string;
+    constructor(name: string, age: number) {
+        super(age); // Chama construtor de Person
+        this.name = name;
+    }
+    public introduce(): void {
+        // Usa o método protected herdado.
+        console.log(`Eu sou ${this.name} e eu tenho ${this.getAge()} anos.`);
+    }
+}
+
+class CEO extends Employee {
+    public invest() {
+        // Também pode acessar o membro protected da classe "avó".
+        const age = this.getAge();
+        console.log(`Investindo com a sabedoria de ${age} anos.`);
+    }
+}
+
+const emp = new Employee("Ramon", 20);
+emp.introduce(); // OK
+
+// emp.getAge(); // ERRO: getAge é 'protected' e não pode ser acessado de fora.
+// emp.name;    // ERRO: name é 'private' e não pode ser acessado de fora.
+```
+
 **Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
