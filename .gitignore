@@ -1,1 +1,10 @@
 node_modules/
+Classes/
+Enums/
+Interfaces/
+Intersections/
+Tuplas/
+TypeAnnotations/
+TYpeFunction/
+Types/
+UnionTypes/
