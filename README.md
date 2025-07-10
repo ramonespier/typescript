@@ -884,4 +884,160 @@ emp.introduce(); // OK
 // emp.name;    // ERRO: name é 'private' e não pode ser acessado de fora.
 ```
 
+## Function Overloads (Sobrecarga de Funções)
+
+A **sobrecarga de funções** permite que uma única função tenha múltiplas "assinaturas" de tipo. Isso significa que a mesma função pode ser chamada de diferentes maneiras (com diferentes tipos ou número de argumentos) e o TypeScript saberá exatamente qual tipo de retorno esperar para cada caso de uso.
+
+A estrutura consiste em:
+1.  **Assinaturas de Sobrecarga:** Múltiplas declarações da função (sem corpo) que descrevem as diferentes formas de chamá-la.
+2.  **Assinatura de Implementação:** Uma única declaração da função (com o corpo) cuja assinatura deve ser genérica o suficiente para ser compatível com todas as assinaturas de sobrecarga.
+
+### 📂 `overload.ts`: Sobrecarga Básica por Tipo de Parâmetro
+
+Este é o exemplo mais fundamental. A função `createDate` pode ser chamada com diferentes tipos de argumento (`Date`, `number`, `string`) e, em todos os casos, o TypeScript entende que o retorno será um objeto `Date`.
+
+```ts
+/**
+ * Criar uma nova data a partir de outra
+ */
+function createDate(value: Date): Date;
+/**
+ * Criar uma nova data usando uma data numerica
+ */
+function createDate(value: number): Date;
+/**
+ * Criar uma nova data usando uma data por extenso
+ */
+function createDate(value: string): Date;
+// Esta é a assinatura da implementação, que lida com todos os casos.
+function createDate(value: Date | number | string): Date {
+    return new Date(value);
+}
+
+createDate("2025-01-01"); // Válido
+createDate(1735689600000); // Válido
+createDate(new Date());  // Válido
+```
+
+### 📂 `overloadParams.ts`: Overloads Baseadas nos Parâmetros (Factory)
+
+Aqui, a sobrecarga é usada para um padrão de *Factory*: dependendo do tipo do terceiro argumento, a função "fabrica" e retorna objetos de formas completamente diferentes (`Button`, `SelectMenu` ou `Input`). O TypeScript usa as assinaturas de sobrecarga para inferir perfeitamente o tipo do valor de retorno.
+
+```ts
+interface Component { id: string; label: string; }
+interface Button extends Component { style: string; }
+interface SelectMenu extends Component { options: string[]; }
+enum InputType { String, Number, Date, Email, Password }
+interface Input extends Component { type: InputType; }
+
+// As assinaturas de sobrecarga
+function buildComponent(id: string, label: string, style: string): Button;
+function buildComponent(id: string, label: string, options: string[]): SelectMenu;
+function buildComponent(id: string, label: string, type: InputType): Input;
+// A implementação que lida com a lógica
+function buildComponent(id: string, label: string, arg: string | string[] | InputType): Button | SelectMenu | Input {
+    if(typeof arg === "string") {
+        return { id, label, style: arg };
+    }
+    if (Array.isArray(arg)) {
+        return { id, label, options: arg };
+    }
+    return { id, label, type: arg };
+}
+
+// Graças à sobrecarga, o TS sabe que 'button' é do tipo 'Button'
+const button = buildComponent("myButton", "Clique aqui", "red");
+```
+
+### 📂 `overloadFunction.ts`: Overloads que Alteram o Tipo de Retorno
+
+Este é um exemplo claro de como uma função *Factory* usa sobrecargas para retornar tipos diferentes com base em uma string literal de entrada. É um padrão muito comum para gerar dados de teste ou objetos de configuração.
+
+```ts
+interface Person { name: string; age: number; }
+interface Dog { name: string; breed: string; }
+interface House { address: string; size: number; }
+
+function generate(type: "person"): Person;
+function generate(type: "house"): House;
+function generate(type: "dog"): Dog;
+function generate(type: "dog" | "house" | "person"): Person | Dog | House {
+    switch (type) {
+        case "person": return { name: "Ramon", age: 20 };
+        case "dog": return { name: "Cachorro", breed: "vira-lata" };
+        case "house": return { address: "Minha rua", size: 100 };
+    }
+}
+
+// O TypeScript infere corretamente que 'house' é do tipo 'House'
+const house = generate("house");
+// house.address; // Válido e com autocomplete!
+```
+
+### 📂 `overloadReturn.ts`: Overloads por Aridade (Número de Argumentos)
+
+Aqui, o TypeScript distingue qual assinatura usar com base em **quantos** argumentos são fornecidos na chamada da função, um conceito conhecido como *aridade*.
+
+- **1 argumento:** Retorna um `Equilateral`.
+- **2 argumentos:** Retorna um `Isosceles`.
+- **3 argumentos:** Retorna um `Scalene`.
+
+```ts
+interface Triangle { sideA: number; sideB: number; sideC: number; }
+interface Equilateral extends Triangle { type: "equilateral"; }
+interface Isoceles extends Triangle { type: "isosceles"; }
+interface Scalene extends Triangle { type: "scalene"; }
+
+function triangle(sides: number): Equilateral;
+function triangle(sideA: number, sideBC: number): Isoceles;
+function triangle(sideA: number, sideB: number, sideC: number): Scalene;
+function triangle(A: number, B?: number, C?: number): Equilateral | Isoceles | Scalene {
+    if( B && C ){
+        return { type: "scalene", sideA: A, sideB: B, sideC: C };
+    }
+    if (B) {
+        return { type: "isoceles", sideA: A, sideB: B, sideC: B };
+    }
+    return { type: "equilateral", sideA: A, sideB: A, sideC: A };
+}
+
+// Tipos inferidos corretamente com base no número de argumentos
+const myEquilateral = triangle(10);
+const myIsoceles = triangle(10, 20);
+const myScalene = triangle(10, 20, 30);
+```
+
+### 📂 `overloadClass.ts`: Overloads no Construtor de Classe
+
+A sobrecarga não se limita a funções autônomas; ela também pode ser aplicada a métodos de classe, sendo o `constructor` um caso de uso muito comum. Isso permite que uma classe seja instanciada de maneiras diferentes.
+
+```ts
+class Player {
+    public name: string;
+    public nickname: string;
+    public health: number; 
+
+    // Assinaturas do construtor
+    constructor(name: string, nickname: string);
+    constructor(name: string, health: number);
+    // Implementação do construtor
+    constructor(name: string, arg: string | number) {
+        this.name = name;
+        if (typeof arg === "string") {
+            // Caso 'nickname' seja passado
+            this.nickname = arg;
+            this.health = 20;
+        } else {
+            // Caso 'health' seja passado
+            this.health = arg;
+            this.nickname = name;
+        }
+    }
+}
+
+// Ambas as instanciações são válidas graças à sobrecarga
+const ramon = new Player("Ramon", "ramonespier");
+const rachel = new Player("Rachel", 18);
+```
+
 **Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
