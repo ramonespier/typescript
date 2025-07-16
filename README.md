@@ -1040,4 +1040,153 @@ const ramon = new Player("Ramon", "ramonespier");
 const rachel = new Player("Rachel", 18);
 ```
 
+## Type Guards (Estreitamento de Tipos)
+
+**Type Guards** são expressões ou funções que realizam uma verificação de tipo em tempo de execução e garantem (ou "guardam") esse tipo dentro de um escopo condicional. Em outras palavras, quando usamos um *type guard* em um `if`, o TypeScript é inteligente o suficiente para saber que, dentro daquele bloco, a variável pertence a um tipo mais específico, liberando o acesso a suas propriedades e métodos. Este processo é chamado de **estreitamento de tipo** (Type Narrowing).
+
+### 📂 `guards.ts`: O `typeof` Guard
+
+O *type guard* mais básico. O operador `typeof` é usado para diferenciar tipos primitivos do JavaScript (`string`, `number`, `boolean`, `symbol`, etc.).
+
+```ts
+function printValue(value: string | number) {
+    // Fora do 'if', 'value' é 'string | number'.
+
+    if (typeof value === "string") {
+        // Dentro deste bloco, o TS sabe que 'value' é uma 'string'.
+        console.log(value.toUpperCase());
+        return;
+    }
+
+    // Por eliminação, aqui o TS sabe que 'value' só pode ser 'number'.
+    console.log(value.toFixed(2));
+}
+```
+
+### 📂 `interfaceGuards.ts`: O `in` Operator Guard
+
+O operador `in` verifica se um objeto possui uma determinada propriedade. É perfeito para diferenciar entre diferentes interfaces ou objetos que não são classes.
+
+```ts
+interface Fish {
+    swim: () => void;
+}
+interface Bird {
+    fly: () => void;
+}
+
+function move(animal: Fish | Bird) {
+    // Se a propriedade "swim" existe em 'animal',
+    // o TS estreita o tipo de 'animal' para 'Fish'.
+    if("swim" in animal) {
+        animal.swim();
+        return;
+    }
+
+    // Se não, o tipo de 'animal' é estreitado para 'Bird'.
+    animal.fly();
+}
+```
+
+### 📂 `classGuards.ts`: O `instanceof` Guard
+
+O operador `instanceof` é o *type guard* específico para classes. Ele verifica se um objeto é uma instância de uma determinada classe, checando sua cadeia de protótipos.
+
+```ts
+class Cat {
+    miau() { console.log("meow!"); }
+}
+class Dog {
+    bark() { console.log("Woof!"); }
+}
+
+function makeSound (animal: Dog | Cat) {
+    // Se 'animal' é uma instância da classe 'Dog', o tipo é estreitado.
+    if (animal instanceof Dog) {
+        animal.bark();
+        return;
+    }
+    // Caso contrário, será uma instância de 'Cat'.
+    animal.miau();
+}
+```
+
+### 📂 `interfaceProfessionals.ts`: Predicados de Tipo (User-Defined Type Guards)
+
+E quando os operadores nativos não são suficientes? Podemos criar nossas próprias funções *type guard* usando **predicados de tipo**.
+
+- **Sintaxe:** A função deve retornar um booleano, mas sua assinatura de retorno usa a sintaxe `value is Type`.
+- **Funcionamento:** Se a função retorna `true`, o TypeScript entende que a variável testada assume o tipo especificado no predicado (`Type`) dentro dos blocos condicionais.
+- **Utilidade:** Essencial para diferenciar interfaces, pois elas não existem em tempo de execução (então `instanceof` não funciona).
+
+```ts
+interface Chef { cook(): void; }
+interface Teacher { teach(): void; }
+interface Driver { drive(): void; }
+type Professionals = Chef | Teacher | Driver;
+
+// Esta função é um User-Defined Type Guard.
+// O predicado 'value is Chef' sinaliza ao TS.
+function isChef(value: Professionals): value is Chef  {
+    return (value as Chef).cook !== undefined;
+}
+
+function execute(professional: Professionals) {
+    // Ao chamar isChef(professional), se o retorno for 'true'...
+    if(isChef(professional)) {
+        // ...o TS sabe que 'professional' aqui dentro é um 'Chef'.
+        professional.cook();
+        return;
+    }
+
+    // ... e assim por diante para os outros guards.
+}
+```
+
+### 📂 `classProfessionals.ts`: Type Guards como Métodos de Classe
+
+Este é um padrão avançado e elegante que combina `instanceof` com os predicados de tipo, mas na forma de métodos de uma classe base.
+
+- **Padrão:**
+    1.  Cria-se uma classe base (`Professionals`).
+    2.  Nela, definimos métodos que atuam como *type guards* (`isChef(): this is Chef`).
+    3.  A lógica interna de cada método usa o `instanceof` para a verificação real.
+- **Vantagem:** A verificação se torna muito mais limpa e orientada a objetos (`professional.isDriver()`).
+
+```ts
+class Professionals {
+    // Este método é um type guard.
+    isChef(): this is Chef {
+        return this instanceof Chef;
+    }
+    isTeacher(): this is Teacher {
+        return this instanceof Teacher;
+    }
+    isDriver(): this is Driver {
+        return this instanceof Driver;
+    }
+}
+
+class Chef extends Professionals {
+    public cook(): void { /* ... */ }
+}
+class Teacher extends Professionals {
+    public teach(): void { /* ... */ }
+}
+class Driver extends Professionals {
+    public drive(): void { /* ... */ }
+}
+
+function execute(professional: Professionals) {
+    // A checagem fica muito mais legível e idiomática.
+    if (professional.isDriver()) {
+        professional.drive();
+    }
+    
+    if (professional.isChef()) {
+        professional.cook();
+    }
+}
+```
+
 **Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
