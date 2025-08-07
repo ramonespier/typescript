@@ -1189,4 +1189,145 @@ function execute(professional: Professionals) {
 }
 ```
 
+## Type Narrowing (Refinamento de Tipos)
+
+**Type Narrowing** é o processo pelo qual o TypeScript remove tipos de uma união para "refinar" ou "estreitar" um tipo mais geral para um mais específico. Quando você usa uma verificação de tipo (um *Type Guard*), o TypeScript analisa essa lógica e, dentro do bloco de código correspondente, trata a variável como se ela pertencesse ao tipo mais específico que você provou que ela é.
+
+O arquivo `narrowing.ts` reúne vários exemplos práticos dessas técnicas.
+
+#### Exemplo #1 e #2: Refinamento com `typeof`
+
+O operador `typeof` permite que o TypeScript refine um tipo com base nos tipos primitivos do JavaScript.
+
+```ts
+// Exemplo #1
+function printValue(value: string | number | boolean) {
+    // Fora, value é: string | number | boolean
+    if (typeof value === "string") {
+        // Dentro, value é: string
+        return;
+    }
+    if (typeof value === "number") {
+        // Dentro, value é: number
+        return;
+    }
+    // No final, por eliminação, value só pode ser: boolean
+    console.log(value);
+}
+
+// Exemplo #2
+function printValue2(value: string | number | boolean) {
+    if (typeof value === "string" || typeof value === "number") {
+        // Dentro, value é: string | number
+        return;
+    }
+    // No final, por eliminação, value só pode ser: boolean
+    console.log(value);
+}
+```
+
+#### Exemplo #3 e #4: Refinamento com `instanceof` e `in`
+
+-   **`instanceof`**: Usado para verificar a cadeia de protótipos de uma classe. É a forma correta de refinar tipos baseados em classes.
+-   **`in`**: Usado para verificar a presença de uma propriedade em um objeto. É ideal para refinar tipos baseados em interfaces ou tipos de objeto.
+
+```ts
+// Exemplo #3: Refinamento com Classes
+class Dog { bark() {} }
+class Cat { meow() {} }
+
+function makeSound(animal: Dog | Cat) {
+    if (animal instanceof Dog) {
+        // TS sabe que 'animal' é um Dog.
+        animal.bark();
+        return;
+    }
+    // TS sabe que 'animal' é um Cat.
+    animal.meow();
+}
+
+// Exemplo #4: Refinamento com Interfaces
+interface Fish { swim: () => void; }
+interface Bird { fly: () => void; }
+
+function move(animal: Fish | Bird) {
+    if ("swim" in animal) {
+        // TS sabe que 'animal' é um Fish.
+        animal.swim();
+        return;
+    }
+    // TS sabe que 'animal' é um Bird.
+    animal.fly();
+}
+```
+
+#### Exemplo #5 e #6: Refinamento por Propriedades e Verificação de "Truthiness"
+
+Podemos usar o operador `in` para verificar propriedades que distinguem os tipos, como `push` para `Array`. Além disso, uma simples verificação de veracidade (`if (value)`) é uma forma eficaz de eliminar `null` e `undefined` de um tipo.
+
+```ts
+// Exemplo #5: Refinamento pela presença de um método
+function main(value: string[] | Date) {
+    if ("push" in value) {
+        // TS sabe que 'value' é um string[].
+        value.push("Ramon"); 
+        return;
+    }
+    // TS sabe que 'value' é um Date.
+    value.getDate(); 
+}
+
+// Exemplo #6: Refinamento de "Truthiness"
+function handle(value: string | null | undefined) {
+    if (!value) {
+        // Aqui 'value' é: string | null | undefined
+        return;
+    }
+    // Após o 'return', TS sabe que 'value' não pode ser null ou undefined.
+    // O tipo foi refinado para: string
+    value.toUpperCase();
+}
+```
+
+#### Exemplo #7 e #8: Refinamento de Propriedades Opcionais e Tipos Complexos
+
+A verificação de veracidade é excelente para lidar com propriedades opcionais. Em uniões de tipos mais complexas, pode ser necessário combinar várias verificações com o operador `in` para dar ao TypeScript certeza suficiente para refinar o tipo.
+
+```ts
+// Exemplo #7: Refinando propriedades opcionais
+interface User { id: string; name: string; nickname?: string; }
+
+function handle2(user?: User) {
+    if (!user) return; // Refina 'user' de 'User | undefined' para 'User'.
+
+    user.id.toUpperCase();
+    user.name.toUpperCase();
+
+    if (!user.nickname) return; // Refina 'user.nickname' de 'string | undefined' para 'string'.
+    user.nickname.toUpperCase();
+}
+
+// Exemplo #8: Refinando tipos complexos
+interface Animal { name: string; age: number; follow(): void; }
+interface Human { name: string; age: number; pets?: Animal[]; }
+interface Post { title: string; author: Human; }
+
+function handle3(value: Animal | Human | Post) {
+    // Ambos 'Animal' e 'Human' têm 'name'. A propriedade 'follow' desambigua.
+    if("name" in value && "follow" in value)  {
+        // TS refinou 'value' para: Animal
+        value.follow();
+        return;
+    }
+    // A propriedade 'title' só existe em 'Post'.
+    if("title" in value) {
+        // TS refinou 'value' para: Post
+        console.log(value.title);
+        return;
+    }
+    // Por eliminação, 'value' só pode ser: Human
+    console.log(value.name);
+}
+```
+
 **Esta documentação é uma referência para que eu me lembre de tudo o que já fiz e possa reutilizar no futuro.**
